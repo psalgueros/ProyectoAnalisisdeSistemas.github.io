@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transmetro - Sistema Integral</title>
+    <style>
+        /* --- VARIABLES OFICIALES --- */
+        :root {
+            --muni-blue: #111A5B;
+            --muni-green: #8CC63F;
+            --bg-light: #F8F9FA;
+            --text-dark: #333333;
+            --priority-blue: #0072CE;
+            --safe-pink: #E91E63;
+            --l1: #6B429C; --l2: #9F82BA; --l6: #FDE025; 
+            --l7: #A6A8AA; --l12: #E85B24; --l13: #75B943; --l18: #009FE3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; color: var(--text-dark); background-color: white;
+        }
+
+        /* --- CABECERA Y NAVEGACIÓN --- */
+        .top-bar {
+            background-color: white; padding: 10px 5%; display: flex;
+            justify-content: space-between; align-items: center; border-bottom: 3px solid var(--muni-green);
+        }
+        .logo { font-weight: bold; color: var(--muni-blue); font-size: 1.5rem; display: flex; align-items: center;}
+        
+        nav {
+            background-color: var(--muni-blue); display: flex; justify-content: center;
+            position: sticky; top: 0; z-index: 100; flex-wrap: wrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        nav button {
+            background: none; border: none; color: white; font-weight: bold;
+            font-size: 0.9rem; padding: 15px 20px; cursor: pointer; text-transform: uppercase;
+            transition: background 0.3s;
+        }
+        nav button:hover, nav button.active { background-color: var(--muni-green); color: var(--muni-blue); }
+
+        /* --- CARRUSEL --- */
+        .carousel-container {
+            position: relative; width: 100%; height: 350px; overflow: hidden; background-color: var(--muni-blue);
+        }
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            opacity: 0; transition: opacity 1s ease-in-out;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; color: white;
+        }
+        .slide::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(17, 26, 91, 0.6); z-index: 1;
+        }
+        .slide.active { opacity: 1; z-index: 2; }
+        .slide-content { position: relative; z-index: 3; padding: 20px; }
+        .slide-content h1 { font-size: 3.5rem; margin: 0; letter-spacing: 2px; text-transform: uppercase; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);}
+        .slide-content p { font-size: 1.5rem; margin-top: 10px; color: var(--muni-green); font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);}
+
+        /* --- VISTAS --- */
+        .view { display: none; padding: 40px 5%; max-width: 1200px; margin: 0 auto; min-height: 50vh; }
+        .view.active-view { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title {
+            text-align: center; color: var(--muni-blue); text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 30px; position: relative;
+        }
+        .section-title::after {
+            content: ''; display: block; width: 60px; height: 3px;
+            background-color: var(--muni-green); margin: 10px auto 0;
+        }
+
+        /* --- COMPONENTES VISUALES --- */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;}
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--bg-light); padding: 25px; border-radius: 8px; border-top: 4px solid var(--muni-blue); margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+        
+        /* Prioridades y Reglamento */
+        .priority-card { text-align: center; color: white; padding: 30px; border-radius: 8px; }
+        .bg-blue-seat { background: linear-gradient(135deg, var(--priority-blue), #005096); }
+        .bg-pink-zone { background: linear-gradient(135deg, var(--safe-pink), #AD1457); }
+        
+        .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; text-align: center; margin-bottom: 40px;}
+        .rule-item { padding: 15px; font-size: 0.9rem; color: #555; background: white; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .rule-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+
+        /* Video y Mapa */
+        .media-container { width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid var(--muni-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 40px; background: #000;}
+
+        /* Formularios y Botones */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--muni-blue); }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;
+        }
+        .btn-submit {
+            background-color: var(--muni-green); color: var(--muni-blue); border: none; padding: 12px 25px;
+            cursor: pointer; border-radius: 4px; font-size: 1.1rem; font-weight: bold; width: 100%; text-transform: uppercase;
+        }
+        .btn-submit:hover { background-color: var(--muni-blue); color: white; }
+        .btn-action { background-color: var(--muni-blue); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-action:hover { background-color: var(--muni-green); color: var(--muni-blue); }
+        .btn-danger { background-color: #d9534f; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+
+        /* Alertas Operador */
+        .alert-box { padding: 20px; margin-bottom: 15px; border-radius: 4px; border-left: 6px solid; font-size: 1.1rem;}
+        .alert-high { background-color: #ffeaea; border-color: #d9534f; color: #b52b27; }
+        .alert-low { background-color: #fff8e1; border-color: #F2A900; color: #8a6d3b; }
+
+        /* Dashboard */
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; }
+        .stat-badge { background: var(--muni-blue); color: white; padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-badge span { display: block; font-size: 1.5rem; font-weight: bold; color: var(--muni-green); }
+
+        /* Pasajero Card */
+        .balance-card { background: linear-gradient(45deg, var(--muni-blue), #2a3dad); color: white; padding: 25px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(17,26,91,0.3); }
+
+        footer { background-color: var(--muni-blue); color: white; text-align: center; padding: 25px; border-top: 4px solid var(--muni-green);}
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="logo">
+            <img src="https://www.muniguate.com/movilidadurbana/wp-content/themes/munigt/img/logo.webp?1.3.0" alt="Logo MuniGuate" height="60" style="margin-right: 15px; object-fit: contain;">
+            <div style="display: flex; flex-direction: column;">
+                <span style="color: var(--muni-blue); font-size: 1.1rem; line-height: 1;">Municipalidad de Guatemala</span>
+                <span style="color: var(--muni-green); font-size: 0.9rem; font-weight: normal;">Sistema Integrado Transmetro</span>
+            </div>
+        </div>
+    </div>
+
+    <nav>
+        <button class="nav-btn active" onclick="switchView('inicio', this)">Inicio y Mapa</button>
+        <button class="nav-btn" onclick="switchView('infraestructura', this)">Infraestructura</button>
+        <button class="nav-btn" onclick="switchView('operador', this)">PC Operador</button>
+        <button class="nav-btn" onclick="switchView('registro', this)">Registro</button>
+        <button class="nav-btn" id="btn-portal" style="background-color: var(--muni-blue); border: 1px solid var(--muni-green);" onclick="switchView('login', this)">Iniciar Sesión / Portal</button>
+    </nav>
+
+    <div id="inicio" class="view active-view" style="padding-top: 0; max-width: 100%;">
+        <div class="carousel-container">
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=2071&auto=format&fit=crop');">
+                <div class="slide-content">
+                    <h1>MOVILIDAD URBANA</h1>
+                    <p>MUNICIPALIDAD DE GUATEMALA</p>
+                </div>
+            </div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=2069&auto=format&fit=crop');">
+                <div class="slide-content">
+                    <h1>TRANSMETRO SEGURO</h1>
+                    <p>Un transporte digno e inclusivo para todos</p>
+                </div>
+            </div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1626245464103-68d83d1c4df2?q=80&w=2070&auto=format&fit=crop');">
+                <div class="slide-content">
+                    <h1>SISTEMA DE CONTROL</h1>
+                    <p>Eficiencia en rutas y horarios</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="max-width: 1200px; margin: 40px auto; padding: 0 5%;">
+            <h2 class="section-title">Inclusividad y Respeto</h2>
+            <div class="grid-2">
+<div>
+    <h3 style="color: var(--muni-blue);">
+        Un transporte digno para todos
+    </h3>
+
+    <p>
+        El Transmetro está diseñado para ser seguro y accesible.
+        Contamos con guías y personal capacitado para garantizar
+        tu movilidad integral en la ciudad.
+    </p>
+
+<div>
+
+    <div style="width:100%; height:250px;">
+        <iframe
+            width="100%"
+            height="250"
+            src="https://www.youtube.com/embed/PyUPgMpQHwU?si=1"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+    </div>
+</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="priority-card bg-blue-seat">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">💺♿</div>
+                        <h3 style="margin: 0 0 10px 0;">Asientos de Prioridad</h3>
+                        <p style="margin: 0; font-size: 0.95rem;">Los asientos de color <strong>AZUL</strong> están reservados estrictamente para personas de la tercera edad, mujeres embarazadas y personas con discapacidad.</p>
+                    </div>
+                    <div class="priority-card bg-pink-zone">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">👩‍👧🛡️</div>
+                        <h3 style="margin: 0 0 10px 0;">Transmetro Seguro</h3>
+                        <p style="margin: 0; font-size: 0.95rem;">Contamos con vagones y áreas designadas exclusivamente para el abordaje seguro de mujeres, niños y niñas. Respeta la señalización.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Reglamento y Prohibiciones</h2>
+            <div class="rules-grid">
+                <div class="rule-item"><span class="rule-icon">🚶‍♂️⛔</span> Ebriedad</div>
+                <div class="rule-item"><span class="rule-icon">🔥⛔</span> Inflamables</div>
+                <div class="rule-item"><span class="rule-icon">🐕⛔</span> Mascotas</div>
+                <div class="rule-item"><span class="rule-icon">🔫⛔</span> Armas</div>
+                <div class="rule-item"><span class="rule-icon">🚬⛔</span> Fumar</div>
+                <div class="rule-item"><span class="rule-icon">🍔⛔</span> Alimentos</div>
+                <div class="rule-item"><span class="rule-icon">🗑️✅</span> Basura en su lugar</div>
+            </div>
+
+            <h2 class="section-title">Mapa Oficial de Rutas</h2>
+            <div class="media-container" style="height: 600px;">
+                <iframe src="https://www.google.com/maps/d/embed?mid=1OHKGTQ0nKQ1PNmE30sQIxY_gMR_JTdQ&ll=14.61890103832483%2C-90.50866420000001&z=13" width="100%" height="100%" style="border:none;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="infraestructura" class="view">
+        <h2 class="section-title">Control de Infraestructura</h2>
+        <div class="grid-2">
+            <div class="card">
+                <h3 style="color: var(--muni-green); margin-top: 0;">Línea 12 (Eje Sur)</h3>
+                <ul>
+                    <li><strong>Distancia:</strong> 14.5 Km</li>
+                    <li><strong>Buses asignados:</strong> 8 unidades.</li>
+                    <li><strong>Parqueos:</strong> Parqueo CENMA.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--muni-green); margin-top: 0;">Estación: El Trébol</h3>
+                <ul>
+                    <li><strong>Líneas:</strong> 12 y 7.</li>
+                    <li><strong>Accesos y Seguridad:</strong> 3 accesos, 3 Guardias.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="operador" class="view">
+        <h2 class="section-title">PC Operador de Estación</h2>
+        <div class="card">
+            <div class="alert-box alert-high">
+                <strong>🔴 ALERTA: CAPACIDAD EXCEDIDA (+50%)</strong><br>
+                Despachando bus adicional automáticamente.
+            </div>
+            <div class="alert-box alert-low">
+                <strong>🟡 AVISO: UNIDAD VACÍA (-25%)</strong><br>
+                Unidad debe esperar 5 minutos adicionales.
+            </div>
+        </div>
+    </div>
+
+    <div id="registro" class="view">
+        <h2 class="section-title">Registro de Nuevo Usuario</h2>
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <form onsubmit="event.preventDefault(); alert('Registrado. Ahora inicie sesión.'); switchView('login', document.getElementById('btn-portal'));">
+                <div class="form-group">
+                    <label>Rol:</label>
+                    <select id="rol-reg"><option value="cliente">Pasajero</option><option value="piloto">Piloto</option><option value="administrador">Administrador</option></select>
+                </div>
+                <div class="form-group"><label>Nombre Completo:</label><input type="text" required></div>
+                <div class="form-group"><label>DPI:</label><input type="text" required></div>
+                <div class="form-group"><label>Contraseña:</label><input type="password" required></div>
+                <button type="submit" class="btn-submit">Registrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="login" class="view">
+        <h2 class="section-title">Iniciar Sesión</h2>
+        <div class="card" style="max-width: 400px; margin: 0 auto; text-align: center;">
+            <p style="color: #666; margin-bottom: 20px;">Selecciona tu rol para ingresar a tu portal correspondiente.</p>
+            <form onsubmit="realizarLogin(event)">
+                <div class="form-group"><input type="text" placeholder="Número de DPI" required></div>
+                <div class="form-group"><input type="password" placeholder="Contraseña" required></div>
+                <div class="form-group">
+                    <select id="login-rol" required>
+                        <option value="cliente">Soy Pasajero (Tarjeta Ciudadana)</option>
+                        <option value="piloto">Soy Piloto Operativo</option>
+                        <option value="administrador">Soy Administrador del Sistema</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">Ingresar al Portal</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="dash-admin" class="view">
+        <div class="dashboard-header">
+            <h2>👑 Panel Central de Administración</h2>
+            <button class="btn-danger" onclick="cerrarSesion()">Cerrar Sesión Segura</button>
+        </div>
+        
+        <div class="grid-3">
+            <div class="stat-badge">Unidades en Ruta<span>142 / 150</span></div>
+            <div class="stat-badge">Saturación Promedio<span>64%</span></div>
+            <div class="stat-badge">Alertas Activas<span>02</span></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>🛠️ Gestión del Sistema</h3>
+                <p>Modificar configuración global de la plataforma.</p>
+                <div class="form-group">
+                    <label>Color Identitario:</label>
+                    <input type="color" value="#8CC63F" onchange="document.documentElement.style.setProperty('--muni-green', this.value)">
+                </div>
+                <div class="form-group">
+                    <label>Mensaje en Pantalla de Estaciones:</label>
+                    <input type="text" placeholder="Ej: Mantener distanciamiento...">
+                </div>
+                <button class="btn-action">Actualizar Avisos</button>
+            </div>
+            <div class="card">
+                <h3>📊 Monitoreo de Flota</h3>
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead><tr style="border-bottom:1px solid #ddd; text-align:left;"><th>Unidad</th><th>Línea</th><th>Estado</th></tr></thead>
+                    <tbody>
+                        <tr><td>T-1201</td><td>L12</td><td>🟢 Operativo</td></tr>
+                        <tr><td>T-0744</td><td>L07</td><td>🟡 Mantenimiento</td></tr>
+                        <tr><td>T-1809</td><td>L18</td><td>🟢 Operativo</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <h3>👥 Gestión de Personal (Pilotos)</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn-action">Asignar Turnos</button>
+                <button class="btn-action">Reportes de Incidencias</button>
+                <button class="btn-action">Auditoría de Recaudación</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dash-piloto" class="view">
+        <div class="dashboard-header">
+            <h2>🚌 Portal del Piloto</h2>
+            <button class="btn-danger" onclick="cerrarSesion()">Terminar Turno</button>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>📍 Mi Asignación</h3>
+                <p><strong>Unidad:</strong> T-1201 (Bi-articulado)</p>
+                <p><strong>Línea:</strong> Línea 12 (Eje Sur)</p>
+                <p><strong>Parqueo Establecido:</strong> Patio CENMA, Sector B-12</p>
+            </div>
+            <div class="card">
+                <h3>⏱️ Mi Recorrido</h3>
+                <p>Próxima Parada: <strong>Estación El Trébol</strong></p>
+                <p>Tiempo Estimado: 4 mins</p>
+                <button class="btn-submit" style="background-color:#f0ad4e; color:white;">Reportar Retraso</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dash-pasajero" class="view">
+        <div class="dashboard-header">
+            <h2>💳 Mi Tarjeta Ciudadana</h2>
+            <button class="btn-action" onclick="cerrarSesion()">Salir</button>
+        </div>
+        <div class="grid-2">
+            <div class="balance-card">
+                <p style="margin:0; opacity:0.8;">Saldo Disponible</p>
+                <h2 style="font-size:3rem; margin:10px 0;">Q <span id="saldo-val">25.00</span></h2>
+                <p style="font-size:0.8rem;">ID Tarjeta: 4522-8900-1122</p>
+            </div>
+            <div class="card">
+                <h3>⚡ Recarga Rápida</h3>
+                <div class="form-group">
+                    <label>Monto a Recargar:</label>
+                    <input type="number" id="monto-recarga" placeholder="Q 0.00">
+                </div>
+                <button class="btn-submit" onclick="recargar()">Pagar con Visa/Mastercard</button>
+            </div>
+        </div>
+        <div class="card">
+            <h3>📈 Información Detallada del Viaje</h3>
+            <p><strong>Costo por viaje:</strong> Q1.00</p>
+            <p><strong>Último abordaje:</strong> Estación Plaza Barrios (Ayer 17:40 PM)</p>
+        </div>
+    </div>
+
+    <footer>
+        <div style="font-weight: bold; margin-bottom: 5px;">PROYECTO FINAL - SISTEMAS DE CONTROL TRANSMETRO</div>
+        Consultoría Técnica por: Patrick Alexander Salguero Solares | © 2026
+    </footer>
+
+    <script>
+        // Navegación principal SPA
+        function switchView(viewId, buttonElement) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active-view'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(viewId).classList.add('active-view');
+            if(buttonElement) buttonElement.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Lógica del Carrusel Animado
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+        setInterval(nextSlide, 4000);
+
+        // Simulación de Login
+        function realizarLogin(event) {
+            event.preventDefault();
+            const rol = document.getElementById('login-rol').value;
+            const btnPortal = document.getElementById('btn-portal');
+            btnPortal.innerText = "Mi Portal";
+            if(rol === 'administrador') switchView('dash-admin', btnPortal);
+            if(rol === 'piloto') switchView('dash-piloto', btnPortal);
+            if(rol === 'cliente') switchView('dash-pasajero', btnPortal);
+        }
+
+        function cerrarSesion() {
+            document.getElementById('btn-portal').innerText = "Iniciar Sesión / Portal";
+            switchView('login', document.getElementById('btn-portal'));
+        }
+
+        // Funciones de Dashboard Pasajero
+        function recargar() {
+            const monto = document.getElementById('monto-recarga').value;
+            if(monto > 0) {
+                const actual = parseFloat(document.getElementById('saldo-val').innerText);
+                document.getElementById('saldo-val').innerText = (actual + parseFloat(monto)).toFixed(2);
+                alert("¡Recarga exitosa! Se han añadido Q" + monto);
+                document.getElementById('monto-recarga').value = "";
+            }
+        }
+    </script>
+</body>
+</html>
